@@ -7,8 +7,40 @@ import argparse
 import csv
 import datetime
 import glob
+import itertools
 import logging
 import os
+import re
+import struct
+
+import constants
+
+
+def parse_008_field(data):
+    print(f"data={data}")
+    print(f"template={constants.FF_TEMPLATE['BOOKS']}")
+
+    start = 0
+
+    bib_info = {}
+
+    for i, field_len in enumerate(constants.FF_TEMPLATE['BOOKS']):
+        len = int(field_len)
+        print(len)
+        end = start + len
+        val = data[start:end].strip()
+
+        print(f"{start}:{end-1}")
+
+        name = constants.FF_FIELDS['BOOKS'][i]
+        print(f"bib_info[{name}]: {val}")
+
+        bib_info[name] = val
+
+        start = end
+
+    return bib_info
+
 
 def dump(obj):
     for attr in dir(obj):
@@ -62,7 +94,20 @@ for marc_file in marc_files:
         last_trans_date = record['005'].format_field()
         fmt_date = format_date(last_trans_date)
 
+        gen_info_str = record['008'].format_field()
+        
+        bib_info = parse_008_field(gen_info_str)
+
         oclc = [entry.format_field() for entry in record.get_fields('035')]
+
+        #lccn = record['010'].format_field()
+
+        for entry in record.get_fields('955'):
+            print(dir(entry))
+            for key, value in entry.subfields_as_dict().items():
+                print(f"{constants.SUBFIELDS_955[key]}: {value[0]}")
+
+        exit(1)
 
         title = record.title() or ""
         uniform_title = record.title() or ""
@@ -91,6 +136,11 @@ for marc_file in marc_files:
         print('-' * term_size.columns)
         print(f"Record ID: {rec_id}")
         print(f"Oranization Code: {org}")
+        print(f"008 Data:")
+        for key, val in bib_info.items():
+            if val and not re.search(r'^\|+$', val):
+                print(f"\t{key}: '{val}'")
+
         print(f"OCLC Control Number: {', '.join(oclc)}")
         print(f"Last Transaction Date: {fmt_date}")
         print(f"Title: {title}")
