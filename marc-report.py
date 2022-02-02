@@ -5,12 +5,19 @@ from pymarc import parse_xml_to_array
 
 import argparse
 import csv
+import datetime
 import glob
 import logging
+import os
 
 def dump(obj):
     for attr in dir(obj):
         print("obj.%s = %r" % (attr, getattr(obj, attr)))
+
+def format_date(tstamp):
+    dt = datetime.datetime.strptime(tstamp, "%Y%m%d%H%M%S.%f")
+    #return dt.strftime("%Y-%m-%d %H:%M")
+    return dt.strftime("%c")
 
 logging.basicConfig(
     format='%(asctime)s - marc-report - %(levelname)s - %(message)s',
@@ -31,7 +38,10 @@ logging.debug("Input file: %s", args.input_dir)
 
 marc_files = sorted(glob.glob(f"{args.input_dir}/*.xml"))
 
-logging.debug(marc_files)
+term_size = os.get_terminal_size()
+
+for marc_file in marc_files:
+    logging.debug(marc_file)
 
 for marc_file in marc_files:
     logging.debug(marc_file)
@@ -39,35 +49,68 @@ for marc_file in marc_files:
     for record in records:
         logging.debug(record)
         print(dir(record))
-        print("Title: {}".format(record.title()))
-        print("Uniform Title: {}".format(record.uniformtitle()))
-        print("Author: {}".format(record.author()))
-        print("Publisher: {}".format(record.publisher()))
-        print("Publication Year: {}".format(record.pubyear()))
-        print("ISBN: {}".format(record.isbn()))
-        print("ISSN: {}".format(record.issn()))
-        print("ISSN Title: {}".format(record.issn_title()))
-        record.leader()
-#         print(foo)
-#         print("Leader: {}".format(record.leader()))
-#         print("Location: {}".format(record.location()))
-#         print("Notes: {}".format(record.notes()))
-#         print("Physical Description: {}".format(record.physicaldescription()))
-# 
-#         print("Series", record.subjects())
-#         print("Subjects: {}".format(",".join(record.subjects()))
 
-#         print("Superintendent of Documents (SuDoc): {}".format(record.sudoc()))
+        fields = record.get_fields()
+        for field in fields:
+            #print(vars(field))
+            print(field)
+            print(field.format_field())
+
+        rec_id = record['001'].format_field()
+        org = record['003'].format_field()
+
+        last_trans_date = record['005'].format_field()
+        fmt_date = format_date(last_trans_date)
+
+        oclc = [entry.format_field() for entry in record.get_fields('035')]
+
+        title = record.title() or ""
+        uniform_title = record.title() or ""
+        author = record.author() or ""
+        publisher = record.publisher() or ""
+        pub_year = record.pubyear() or ""
+        isbn = record.isbn() or ""
+        issn = record.issn() or ""
+        issn_title = record.issn_title() or ""
+        issnl = record.issnl() or ""
+        location = record.location() or ""
+        pos = record.pos
+        leader = record.leader
+        notes = [entry.format_field() for entry in record.notes()]
+        phys_desc = [entry.format_field()
+            for entry in record.physicaldescription()]
+        subjects = [entry.format_field() for entry in record.subjects()]
+
+        series = record.series()
+
+        sudoc = record.sudoc() or ""
+
+        #record.parse_leader()
 
 
-# , 'pos', 
+        print('-' * term_size.columns)
+        print(f"Record ID: {rec_id}")
+        print(f"Oranization Code: {org}")
+        print(f"OCLC Control Number: {', '.join(oclc)}")
+        print(f"Last Transaction Date: {fmt_date}")
+        print(f"Title: {title}")
+        print(f"Uniform Title: {uniform_title}")
+        print(f"Author: {author}")
+        print(f"Publisher: {publisher}")
+        print(f"Publication Year: {pub_year}")
+        print(f"ISBN: {isbn}")
+        print(f"ISSN: {issn}")
+        print(f"ISSN Title: {issn_title}")
+        print(f"ISSNL: {issnl}")
+        print(f"Location: {location}")
+        print(f"pos: {pos}")
+        print(f"Leader: {leader}")
+        print("Notes: {}".format(", ".join(notes)))
+        print("Physical Description: {}".format(", ".join(phys_desc)))
+        print("Subject: {}".format(", ".join(subjects)))
+        print(f"Series: {', '.join(series)}")
+        print(f"Superintendent of Documents (SuDoc): {sudoc}")
+        print('-' * term_size.columns)
 
-
-
-
-        #dump(records)
-#         fields = record.get_fields()
-#         for field in fields:
-#             print(vars(field))
-#             print(field)
-
+        exit(1)
+        
