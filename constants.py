@@ -53,21 +53,22 @@ FF_TEMPLATE = {
 }
 
 SUBFIELDS_955 = {
-	'a': 'Tracking information (R)',
-	'b': 'IBC/BBC processing (R)',
-	'c': 'Descriptive cataloging (R)',
-	'd': 'Subject cataloging (R)',
-	'e': 'Shelflisting and ordinary end-stage processing (R)',
-	'f': 'CIP verification (R)',
-	'g': 'Serials end-stage processing (R)',
-	'h': 'Minimal level cataloging (MLC) (R)',
-	'i': 'Whole item cataloging (R)',
-	'j': 'ISSN pre-publication assignment (R)',
-	'k': 'ISSN post-publication assignment (R)',
-	'l': 'Holdings conversion and inventory (R)',
-	'm': 'Bibliographic record cancellations (R)',
-	'n': 'ISSN pre-publication elements updated (R)',
-	't': 'Added copy (R)',
-	'w': 'Dewey Decimal Classification (R)'
+    'a': 'Tracking information (R)',
+    'b': 'IBC/BBC processing (R)',
+    'c': 'Descriptive cataloging (R)',
+    'd': 'Subject cataloging (R)',
+    'e': 'Shelflisting and ordinary end-stage processing (R)',
+    'f': 'CIP verification (R)',
+    'g': 'Serials end-stage processing (R)',
+    'h': 'Minimal level cataloging (MLC) (R)',
+    'i': 'Whole item cataloging (R)',
+    'j': 'ISSN pre-publication assignment (R)',
+    'k': 'ISSN post-publication assignment (R)',
+    'l': 'Holdings conversion and inventory (R)',
+    'm': 'Bibliographic record cancellations (R)',
+    'n': 'ISSN pre-publication elements updated (R)',
+    't': 'Added copy (R)',
+    'w': 'Dewey Decimal Classification (R)',
+    'v': 'Enumeration and chronology'
 }
 

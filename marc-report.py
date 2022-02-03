@@ -108,6 +108,7 @@ for marc_file in marc_files:
         for entry in record.get_fields('955'):
             print(dir(entry))
             for key, value in entry.subfields_as_dict().items():
+                print(f"{key} {value}")
                 print(f"{constants.SUBFIELDS_955[key]}: {value[0]}")
 
         title = record.title() or ""
@@ -127,7 +128,7 @@ for marc_file in marc_files:
             for entry in record.physicaldescription()]
         subjects = [entry.format_field() for entry in record.subjects()]
 
-        series = record.series()
+        series = [entry.format_field() for entry in record.series()]
 
         sudoc = record.sudoc() or ""
 
