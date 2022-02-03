@@ -62,13 +62,19 @@ def clean(buf):
         return ""
 
 def catalog_src(record):
-    return clean(record['040']['a'])
+    return clean(record['040'].format_field())
 
 def langcode(record):
-    return clean(record['041']['a'])
+    return clean(record['041'].format_field())
 
-def local_call_num(record):
-    return clean(record['099'])
+def loc_call_number(record):
+    if '050' in record:
+        return clean(record['050'].format_field())
+    else:
+        return ''
+
+def lcl_call_number(record):
+    return clean(record['099'].format_field())
 
 def publoc(record):
     return clean(record['260']['a'])
@@ -149,22 +155,24 @@ for marc_file in marc_files:
         pos = record.pos
         leader = record.leader
 
+        loc_call_num = loc_call_number(record)
+
         try:
             cat_src = catalog_src(record)
         except:
             cat_src = ""
 
-        lang_code = ""
         try:
             lang_code = langcode(record)
         except Exception as e:
-            print(e)
+            print(f"Error getting lang_code: {e}")
             lang_code = ""
 
         try:
-            local_call_num = local_call_num(record)
-        except:
-            local_call_num = ""
+            lcl_call_num = lcl_call_number(record)
+        except Exception as e:
+            print(f"Error getting lcl_call_num: {e}")
+            lcl_call_num = ""
 
         notes = [entry.format_field()
             for entry in record.notes()]
@@ -182,8 +190,9 @@ for marc_file in marc_files:
 
         print('-' * term_width)
 
+        print(f"Library of Congress Call Number: {loc_call_num}")
         print(f"Catalog Source: {cat_src}")
-        print(f"Local Call No: {local_call_num}")
+        print(f"Local Call No: {lcl_call_num}")
         print(f"Language Code: {lang_code}")
 
         print(f"Record ID: {rec_id}")
