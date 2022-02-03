@@ -35,7 +35,7 @@ def parse_008_field(data):
 
         name = constants.FF_FIELDS['BOOKS'][i]
         print(f"bib_info[{name}]: {val}")
-        
+
         bib_info[name] = val
         if name == "Lang":
             bib_info["Language"] = constants.LANG[val]
@@ -53,6 +53,26 @@ def format_date(tstamp):
     dt = datetime.datetime.strptime(tstamp, "%Y%m%d%H%M%S.%f")
     #return dt.strftime("%Y-%m-%d %H:%M")
     return dt.strftime("%c")
+
+
+def clean(buf):
+    if buf:
+        return buf.strip(" ,.:[]/")
+    else:
+        return ""
+
+def catalog_src(record):
+    return clean(record['040']['a'])
+
+def langcode(record):
+    return clean(record['041']['a'])
+
+def local_call_num(record):
+    return clean(record['099'])
+
+def publoc(record):
+    return clean(record['260']['a'])
+
 
 logging.basicConfig(
     format='%(asctime)s - marc-report - %(levelname)s - %(message)s',
@@ -73,7 +93,11 @@ logging.debug("Input file: %s", args.input_dir)
 
 marc_files = sorted(glob.glob(f"{args.input_dir}/*.xml"))
 
-term_size = os.get_terminal_size()
+try:
+    term_size = os.get_terminal_size()
+    term_width = term_size.columns
+except:
+    term_width = 80
 
 for marc_file in marc_files:
     logging.debug(marc_file)
@@ -98,7 +122,7 @@ for marc_file in marc_files:
         fmt_date = format_date(last_trans_date)
 
         gen_info_str = record['008'].format_field()
-        
+
         bib_info = parse_008_field(gen_info_str)
 
         oclc = [entry.format_field() for entry in record.get_fields('035')]
@@ -111,31 +135,57 @@ for marc_file in marc_files:
                 print(f"{key} {value}")
                 print(f"{constants.SUBFIELDS_955[key]}: {value[0]}")
 
-        title = record.title() or ""
-        uniform_title = record.title() or ""
-        author = record.author() or ""
-        publisher = record.publisher() or ""
-        pub_year = record.pubyear() or ""
-        isbn = record.isbn() or ""
-        issn = record.issn() or ""
-        issn_title = record.issn_title() or ""
-        issnl = record.issnl() or ""
-        location = record.location() or ""
+        title = clean(record.title())
+        uniform_title = clean(record.title())
+        author = clean(record.author())
+        publisher = clean(record.publisher())
+        pub_year = clean(record.pubyear())
+        pub_loc = clean(publoc(record))
+        isbn = clean(record.isbn())
+        issn = clean(record.issn())
+        issn_title = clean(record.issn_title())
+        issnl = clean(record.issnl())
+        location = clean(record.location())
         pos = record.pos
         leader = record.leader
-        notes = [entry.format_field() for entry in record.notes()]
+
+        try:
+            cat_src = catalog_src(record)
+        except:
+            cat_src = ""
+
+        lang_code = ""
+        try:
+            lang_code = langcode(record)
+        except Exception as e:
+            print(e)
+            lang_code = ""
+
+        try:
+            local_call_num = local_call_num(record)
+        except:
+            local_call_num = ""
+
+        notes = [entry.format_field()
+            for entry in record.notes()]
+
         phys_desc = [entry.format_field()
             for entry in record.physicaldescription()]
-        subjects = [entry.format_field() for entry in record.subjects()]
 
-        series = [entry.format_field() for entry in record.series()]
+        subjects = [entry.format_field()
+            for entry in record.subjects()]
 
-        sudoc = record.sudoc() or ""
+        series = [entry.format_field()
+            for entry in record.series()]
 
-        #record.parse_leader()
+        sudoc = clean(record.sudoc())
 
+        print('-' * term_width)
 
-        print('-' * term_size.columns)
+        print(f"Catalog Source: {cat_src}")
+        print(f"Local Call No: {local_call_num}")
+        print(f"Language Code: {lang_code}")
+
         print(f"Record ID: {rec_id}")
         print(f"Oranization Code: {org}")
         print(f"008 Data:")
@@ -150,6 +200,7 @@ for marc_file in marc_files:
         print(f"Author: {author}")
         print(f"Publisher: {publisher}")
         print(f"Publication Year: {pub_year}")
+        print(f"Publication Location: {pub_loc}")
         print(f"ISBN: {isbn}")
         print(f"ISSN: {issn}")
         print(f"ISSN Title: {issn_title}")
@@ -162,6 +213,5 @@ for marc_file in marc_files:
         print("Subject: {}".format(", ".join(subjects)))
         print(f"Series: {', '.join(series)}")
         print(f"Superintendent of Documents (SuDoc): {sudoc}")
-        print('-' * term_size.columns)
+        print('-' * term_width)
 
-        
