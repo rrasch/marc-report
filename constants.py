@@ -1,3 +1,21 @@
+import pathlib
+
+def get_lang(lang_file):
+    lang = {}
+    with open(lang_file) as f:
+        lines = f.readlines()
+        for line in lines:
+            cols = line.strip().split('|')
+            lang[cols[0]] = cols[3]
+    return lang
+
+
+
+LANG_FILE = pathlib.Path(__file__).parent / "ISO-639-2_utf-8.txt"
+
+
+LANG = get_lang(LANG_FILE)
+
 
 FF_FIELDS = {
     'BOOKS':

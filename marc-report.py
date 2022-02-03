@@ -9,6 +9,7 @@ import datetime
 import glob
 import itertools
 import logging
+import pathlib
 import os
 import re
 import struct
@@ -34,8 +35,10 @@ def parse_008_field(data):
 
         name = constants.FF_FIELDS['BOOKS'][i]
         print(f"bib_info[{name}]: {val}")
-
+        
         bib_info[name] = val
+        if name == "Lang":
+            bib_info["Language"] = constants.LANG[val]
 
         start = end
 
@@ -107,8 +110,6 @@ for marc_file in marc_files:
             for key, value in entry.subfields_as_dict().items():
                 print(f"{constants.SUBFIELDS_955[key]}: {value[0]}")
 
-        exit(1)
-
         title = record.title() or ""
         uniform_title = record.title() or ""
         author = record.author() or ""
@@ -162,5 +163,4 @@ for marc_file in marc_files:
         print(f"Superintendent of Documents (SuDoc): {sudoc}")
         print('-' * term_size.columns)
 
-        exit(1)
         
