@@ -9,14 +9,26 @@ def get_lang(lang_file):
             lang[cols[0]] = cols[3]
     return lang
 
+def get_marc_tag(tag_file):
+    tag = {}
+    with open(tag_file) as f:
+        lines = f.readlines()
+        for line in lines:
+            cols = line.strip().split(',')
+            tag[cols[0]] = cols[1]
+    return tag
 
 # wget https://www.loc.gov/standards/iso639-2/ISO-639-2_utf-8.txt
 LANG_FILE = pathlib.Path(__file__).parent / "ISO-639-2_utf-8.txt"
 
+# ./gen-marc-tag-list.py  > tags.csv
+MARC_TAG_FILE = pathlib.Path(__file__).parent / "marc-tags.csv"
 
 LANG = get_lang(LANG_FILE)
 
+MARC_TAG = get_marc_tag(MARC_TAG_FILE)
 
+# Based on https://metacpan.org/pod/MARC Perl module
 FF_FIELDS = {
     'BOOKS':
         'Entered DtSt Date1 Date2 Ctry Ills Audn Form Cont ' \
@@ -40,7 +52,6 @@ FF_FIELDS = {
         'Entered DtSt Date1 Date2 ' \
         'Ctry Undef1 Form Undef2 Lang MRec Srce'.split()
 }
-
 
 FF_TEMPLATE = {
     'BOOKS'          : "6144341141111111311",
