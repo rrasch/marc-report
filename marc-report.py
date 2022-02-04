@@ -50,16 +50,27 @@ def dump(obj):
         print("obj.%s = %r" % (attr, getattr(obj, attr)))
 
 def format_date(tstamp):
-    dt = datetime.datetime.strptime(tstamp, "%Y%m%d%H%M%S.%f")
-    #return dt.strftime("%Y-%m-%d %H:%M")
-    return dt.strftime("%c")
-
+    if re.search(r'^\d{14}\.0', tstamp):
+        dt = datetime.datetime.strptime(tstamp, "%Y%m%d%H%M%S.%f")
+        # return dt.strftime("%Y-%m-%d %H:%M")
+        return dt.strftime("%c")
+    else:
+        return ""
 
 def clean(buf):
     if buf:
         return buf.strip(" ,.:[]/")
     else:
         return ""
+
+def get_field(record, tag):
+    if tag in record:
+        return clean(record[tag].format_field())
+    else:
+        return ""
+
+def last_transaction_date(record):
+    format_date(get_field(record, '005'))
 
 def catalog_src(record):
     return clean(record['040'].format_field())
@@ -113,11 +124,9 @@ for marc_file in marc_files:
     records = parse_xml_to_array(marc_file)
     for record in records:
         logging.debug(record)
-        print(dir(record))
 
         fields = record.get_fields()
         for field in fields:
-            #print(vars(field))
             print(field)
             print(field.format_field())
 
@@ -128,12 +137,11 @@ for marc_file in marc_files:
         fmt_date = format_date(last_trans_date)
 
         gen_info_str = record['008'].format_field()
-
         bib_info = parse_008_field(gen_info_str)
 
         oclc = [entry.format_field() for entry in record.get_fields('035')]
 
-        #lccn = record['010'].format_field()
+        lccn = get_field(record, '010')
 
         for entry in record.get_fields('955'):
             print(dir(entry))
@@ -222,5 +230,16 @@ for marc_file in marc_files:
         print("Subject: {}".format(", ".join(subjects)))
         print(f"Series: {', '.join(series)}")
         print(f"Superintendent of Documents (SuDoc): {sudoc}")
+
+        fields = record.get_fields()
+        for field in fields:
+            print(f"[{field.tag}]", end="")
+            if field.tag in constants.MARC_TAG:
+                print(f" {constants.MARC_TAG[field.tag]}", end="")
+            else:
+                print(f"No description for {field.tag}")
+                exit(1)
+            print(f": {field.format_field()}")
+
         print('-' * term_width)
 
