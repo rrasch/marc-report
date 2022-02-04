@@ -1,4 +1,5 @@
 import pathlib
+import re
 
 def get_lang(lang_file):
     lang = {}
@@ -14,8 +15,9 @@ def get_marc_tag(tag_file):
     with open(tag_file) as f:
         lines = f.readlines()
         for line in lines:
-            cols = line.strip().split(',')
-            tag[cols[0]] = cols[1]
+            num, desc = line.strip().split(',', 1)
+            desc = re.sub(r'\s*\(N?R\)$', '', desc)
+            tag[num] = desc
     return tag
 
 # wget https://www.loc.gov/standards/iso639-2/ISO-639-2_utf-8.txt
