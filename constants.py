@@ -10,7 +10,7 @@ def get_lang(lang_file):
     return lang
 
 
-
+# wget https://www.loc.gov/standards/iso639-2/ISO-639-2_utf-8.txt
 LANG_FILE = pathlib.Path(__file__).parent / "ISO-639-2_utf-8.txt"
 
 
