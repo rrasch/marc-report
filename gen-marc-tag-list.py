@@ -31,7 +31,23 @@ df.fillna('', inplace=True)
 
 # print(df.columns)
 
-tag_dict = {}
+tag_dict = {
+    '019': 'OCLC Control Number Cross-Reference',
+    '025': 'Overseas Acquisition Number (R)',
+    '090': 'Locally Assigned LC-type Call Number (R)',
+    '092': 'Locally Assigned Dewey Call Number (R)',
+    '096': 'Locally Assigned NLM-type Call Number (R)',
+    '098': 'Other Classification Schemes (R)',
+    '099': 'Local Free-Text Call Number (R)',
+    '337': 'Media Type (R)',
+    '338': 'Carrier Type (R)',
+    '360': 'Subject (R)',
+    '648': 'Subject Added Entry-Chronological Term (R)',
+    '655': 'Index Term-Genre/Form (R)',
+    '776': 'Additional Physical Form Entry (R)',
+    '797': 'Local Added Entry--Corporate Name (R)',
+    '955': 'OCLC Locally Defined (R)',
+}
 
 for index, row in df.iterrows():
     tag = row['MARC21']
@@ -51,8 +67,6 @@ with open(tag_list_file) as f:
             desc = re.sub(" +", " ", desc)
             if tag not in tag_dict and desc != "unassigned":
                 tag_dict[tag] = desc
-
-tag_dict['360'] = 'Subject (R)'
 
 for tag, desc in sorted(tag_dict.items()):
     print(f"{tag},{desc}")
