@@ -33,25 +33,25 @@ MARC_TAG = get_marc_tag(MARC_TAG_FILE)
 # Based on https://metacpan.org/pod/MARC Perl module
 FF_FIELDS = {
     'BOOKS':
-        'Entered DtSt Date1 Date2 Ctry Ills Audn Form Cont ' \
+        'Entered DateType Date1 Date2 Ctry Ills Audn Form Cont ' \
         'GPub Conf Fest Indx Undef1 Fict Biog Lang MRec Srce'.split(),
     'COMPUTER_FILES':
-        'Entered DtSt Date1 Date2 Ctry Undef1 Audn Undef2 ' \
+        'Entered DateType Date1 Date2 Ctry Undef1 Audn Undef2 ' \
         'File Undef3 GPub Undef4 Lang MRec Srce'.split(),
     'MAPS':
-        'Entered DtSt Date1 Date2 Ctry Relf Proj Prme CrTp ' \
+        'Entered DateType Date1 Date2 Ctry Relf Proj Prme CrTp ' \
         'Undef1 GPub Undef2 Indx Undef3 SpFm Lang MRec Srce'.split(),
     'MUSIC':
-        'Entered DtSt Date1 Date2 Ctry Comp FMus Undef1 Audn ' \
+        'Entered DateType Date1 Date2 Ctry Comp FMus Undef1 Audn ' \
         'Form AccM LTxt Undef2 Lang MRec Srce'.split(),
     'SERIALS':
-        'Entered DtSt Date1 Date2 Ctry Freq Regl ISSN SrTp Orig ' \
+        'Entered DateType Date1 Date2 Ctry Freq Regl ISSN SrTp Orig ' \
         'Form EntW Cont GPub Conf Undef1 Alph S_L Lang MRec Srce'.split(),
     'VIS':
-        'Entered DtSt Date1 Date2 Ctry Time Undef1 ' \
+        'Entered DateType Date1 Date2 Ctry Time Undef1 ' \
         'Audn AccM GPub Undef2 TMat Tech Lang MRec Srce'.split(),
     'MIX':
-        'Entered DtSt Date1 Date2 ' \
+        'Entered DateType Date1 Date2 ' \
         'Ctry Undef1 Form Undef2 Lang MRec Srce'.split()
 }
 
