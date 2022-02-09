@@ -6,6 +6,7 @@ class Leader:
         "d": "Deleted",
         "n": "New",
         "p": "Increase in encoding level from prepublication",
+        "m": "UNKNOWN"
     }
 
     record_types = {
@@ -41,6 +42,7 @@ class Leader:
     }
 
     def __init__(self, ldr):
+        self.ldr_str = ldr
         self.record_len = int(ldr[0:5])
         self.record_status = Leader.record_statuses[ldr[5]]
         self.record_type = Leader.record_types[ldr[6]]
@@ -50,6 +52,7 @@ class Leader:
 
     def __str__(self):
         return (
+            f"Leader({self.ldr_str}):\n"
             f"record length {self.record_len}\n"
             f"record status = {self.record_status}\n"
             f"record type = {self.record_type}\n"
