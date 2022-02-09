@@ -7,7 +7,6 @@ import argparse
 import csv
 import datetime
 import glob
-import itertools
 import logging
 import pathlib
 import os
@@ -15,11 +14,11 @@ import re
 import struct
 
 import constants
-
+import leader
 
 def parse_008_field(data):
-    print(f"data={data}")
-    print(f"template={constants.FF_TEMPLATE['BOOKS']}")
+    logging.debug(f"data={data}")
+    logging.debug(f"template={constants.FF_TEMPLATE['BOOKS']}")
 
     start = 0
 
@@ -27,14 +26,14 @@ def parse_008_field(data):
 
     for i, field_len in enumerate(constants.FF_TEMPLATE['BOOKS']):
         len = int(field_len)
-        print(len)
+        logging.debug(len)
         end = start + len
         val = data[start:end].strip()
 
-        print(f"{start}:{end-1}")
+        logging.debug(f"{start}:{end-1}")
 
         name = constants.FF_FIELDS['BOOKS'][i]
-        print(f"bib_info[{name}]: {val}")
+        logging.debug(f"bib_info[{name}]: {val}")
 
         bib_info[name] = val
         if name == "Lang":
@@ -47,7 +46,7 @@ def parse_008_field(data):
 
 def dump(obj):
     for attr in dir(obj):
-        print("obj.%s = %r" % (attr, getattr(obj, attr)))
+        logging.debug("obj.%s = %r" % (attr, getattr(obj, attr)))
 
 def format_date(tstamp):
     if re.search(r'^\d{14}\.0', tstamp):
@@ -73,22 +72,56 @@ def last_transaction_date(record):
     format_date(get_field(record, '005'))
 
 def catalog_src(record):
-    return clean(record['040'].format_field())
+    return get_field(record, '040')
 
 def langcode(record):
-    return clean(record['041'].format_field())
+    return get_field(record, '041')
 
 def loc_call_number(record):
-    if '050' in record:
-        return clean(record['050'].format_field())
-    else:
-        return ''
+    return get_field(record, '050')
 
 def lcl_call_number(record):
-    return clean(record['099'].format_field())
+    return get_field(record, '099')
 
 def publoc(record):
     return clean(record['260']['a'])
+
+def myprint(desc, value):
+    print('\033[92m' + desc + '\033[0m: ' + value)
+
+
+columns = {
+    "Record Length":          "record_length",
+    "Record Status":          "record_status",
+    "Record Type":            "record_type",
+    "Bibliographic Level":    "bib_level",
+    "Control Number":         "control_num",
+    "Control Number ID":      "control_num_id",
+    "Catalog Source":         "cat_src",
+    "Language Code":          "lang_code",
+    "LoC Call Number":        "loc_call_num",
+    "Local Call Number":      "lcl_call_num",
+    "Last Transaction Date":  "fmt_date",
+    "System Control Number":  "syscn",
+    "Title":                  "title",
+    "Uniform Title":          "uniform_title",
+    "Author":                 "author",
+    "Publisher":              "publisher",
+    "Publication Year":       "pub_year",
+    "Publication Location":   "pub_loc",
+    "ISBN":                   "isbn",
+    "ISSN":                   "issn",
+    "ISSN Title":             "issn_title",
+    "ISSNL":                  "issnl",
+    "Location":               "location",
+    "Leader":                 "leader",
+    "Notes":                  "notes",
+    "Physical Description":   "phys_desc",
+    "Subject":                "subjects",
+    "Series":                 "series",
+    "Superintendent of Doc":  "sudoc",
+}
+
 
 
 logging.basicConfig(
@@ -99,6 +132,8 @@ parser = argparse.ArgumentParser(
     description="Report of all MARC fields present in marcxml_in files.")
 parser.add_argument("input_dir", metavar="INPUT_DIRECTORY",
     help="Input directory")
+parser.add_argument("-o", "--output", metavar="OUTPUT_FILE",
+    help="Output csv file")
 parser.add_argument("-d", "--debug",
     help="Enable debugging messages", action="store_true")
 args = parser.parse_args()
@@ -116,6 +151,10 @@ try:
 except:
     term_width = 80
 
+out = open(args.output, 'w', newline='')
+writer = csv.writer(out, quotechar='"', quoting=csv.QUOTE_ALL)
+writer.writerow(columns.keys())
+
 for marc_file in marc_files:
     logging.debug(marc_file)
 
@@ -125,111 +164,86 @@ for marc_file in marc_files:
     for record in records:
         logging.debug(record)
 
+        data = {}
+
         fields = record.get_fields()
         for field in fields:
-            print(field)
-            print(field.format_field())
+            logging.debug(field)
+            logging.debug(field.format_field())
 
-        rec_id = record['001'].format_field()
-        org = record['003'].format_field()
+        data['control_num'] = get_field(record, '001')
+        data['control_num_id'] = get_field(record, '003')
 
-        last_trans_date = record['005'].format_field()
-        fmt_date = format_date(last_trans_date)
+        data['last_trans_date'] = get_field(record, '005')
+        data['fmt_date'] = format_date(data['last_trans_date'])
 
         gen_info_str = record['008'].format_field()
         bib_info = parse_008_field(gen_info_str)
 
-        oclc = [entry.format_field() for entry in record.get_fields('035')]
+        data['lccn'] = get_field(record, '010')
 
-        lccn = get_field(record, '010')
+        data['syscn'] = [entry.format_field()
+            for entry in record.get_fields('035')]
+
+        data['cat_src']       = catalog_src(record)      #040
+        data['lang_code']     = langcode(record)         #041
+        data['loc_call_num']  = get_field(record, '050') #050
+        data['lcl_call_num']  = lcl_call_number(record)  #099
 
         for entry in record.get_fields('955'):
-            print(dir(entry))
+            logging.debug(dir(entry))
             for key, value in entry.subfields_as_dict().items():
-                print(f"{key} {value}")
-                print(f"{constants.SUBFIELDS_955[key]}: {value[0]}")
+                logging.debug(f"{key} {value}")
+                logging.debug(f"{constants.SUBFIELDS_955[key]}: {value[0]}")
 
-        title = clean(record.title())
-        uniform_title = clean(record.title())
-        author = clean(record.author())
-        publisher = clean(record.publisher())
-        pub_year = clean(record.pubyear())
-        pub_loc = clean(publoc(record))
-        isbn = clean(record.isbn())
-        issn = clean(record.issn())
-        issn_title = clean(record.issn_title())
-        issnl = clean(record.issnl())
-        location = clean(record.location())
-        pos = record.pos
-        leader = record.leader
+        ldr = leader.Leader(record.leader)
+        logging.debug(ldr)
 
-        loc_call_num = loc_call_number(record)
+        data['leader']        = record.leader
+        data['record_length'] = ldr.record_len
+        data['record_status'] = ldr.record_status
+        data['record_type']   = ldr.record_type
+        data['bib_level']     = ldr.bib_level
+        data['title']         = clean(record.title())
+        data['uniform_title'] = clean(record.title())
+        data['author']        = clean(record.author())
+        data['publisher']     = clean(record.publisher())
+        data['pub_year']      = clean(record.pubyear())
+        data['pub_loc']       = clean(publoc(record))
+        data['isbn']          = clean(record.isbn())
+        data['issn']          = clean(record.issn())
+        data['issn_title']    = clean(record.issn_title())
+        data['issnl']         = clean(record.issnl())
+        data['location']      = clean(record.location())
+        data['sudoc']         = clean(record.sudoc())
 
-        try:
-            cat_src = catalog_src(record)
-        except:
-            cat_src = ""
-
-        try:
-            lang_code = langcode(record)
-        except Exception as e:
-            print(f"Error getting lang_code: {e}")
-            lang_code = ""
-
-        try:
-            lcl_call_num = lcl_call_number(record)
-        except Exception as e:
-            print(f"Error getting lcl_call_num: {e}")
-            lcl_call_num = ""
-
-        notes = [entry.format_field()
+        data['notes'] = [entry.format_field()
             for entry in record.notes()]
 
-        phys_desc = [entry.format_field()
+        data['phys_desc'] = [entry.format_field()
             for entry in record.physicaldescription()]
 
-        subjects = [entry.format_field()
+        data['subjects'] = [entry.format_field()
             for entry in record.subjects()]
 
-        series = [entry.format_field()
+        data['series'] = [entry.format_field()
             for entry in record.series()]
-
-        sudoc = clean(record.sudoc())
 
         print('-' * term_width)
 
-        print(f"Library of Congress Call Number: {loc_call_num}")
-        print(f"Catalog Source: {cat_src}")
-        print(f"Local Call No: {lcl_call_num}")
-        print(f"Language Code: {lang_code}")
+        row = []
 
-        print(f"Record ID: {rec_id}")
-        print(f"Oranization Code: {org}")
-        print(f"008 Data:")
-        for key, val in bib_info.items():
-            if val and not re.search(r'^\|+$', val):
-                print(f"\t{key}: '{val}'")
+        for k, v in columns.items():
+            val = ''
+            if data[v]:
+                if type(data[v]) is list:
+                    val = ', '.join(data[v])
+                else:
+                    val = data[v]
+                print(k + ': ', val)
+            row.append(val)
 
-        print(f"OCLC Control Number: {', '.join(oclc)}")
-        print(f"Last Transaction Date: {fmt_date}")
-        print(f"Title: {title}")
-        print(f"Uniform Title: {uniform_title}")
-        print(f"Author: {author}")
-        print(f"Publisher: {publisher}")
-        print(f"Publication Year: {pub_year}")
-        print(f"Publication Location: {pub_loc}")
-        print(f"ISBN: {isbn}")
-        print(f"ISSN: {issn}")
-        print(f"ISSN Title: {issn_title}")
-        print(f"ISSNL: {issnl}")
-        print(f"Location: {location}")
-        print(f"pos: {pos}")
-        print(f"Leader: {leader}")
-        print("Notes: {}".format(", ".join(notes)))
-        print("Physical Description: {}".format(", ".join(phys_desc)))
-        print("Subject: {}".format(", ".join(subjects)))
-        print(f"Series: {', '.join(series)}")
-        print(f"Superintendent of Documents (SuDoc): {sudoc}")
+        writer.writerow(row)
 
         fields = record.get_fields()
         for field in fields:
@@ -241,5 +255,8 @@ for marc_file in marc_files:
                 exit(1)
             print(f": {field.format_field()}")
 
-        print('-' * term_width)
+        print(f"[008] Fixed Length Data Elements (Parsed):")
+        for key, val in bib_info.items():
+            if val and not re.search(r'^\|+$', val):
+                print(f"\t{key}: '{val}'")
 
