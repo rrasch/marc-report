@@ -36,7 +36,7 @@ def parse_008_field(data):
         logging.debug(f"bib_info[{name}]: {val}")
 
         bib_info[name] = val
-        if name == "Lang":
+        if name == "Lang" and val in constants.LANG:
             bib_info["Language"] = constants.LANG[val]
 
         start = end
@@ -133,6 +133,7 @@ parser = argparse.ArgumentParser(
 parser.add_argument("input_dir", metavar="INPUT_DIRECTORY",
     help="Input directory")
 parser.add_argument("-o", "--output", metavar="OUTPUT_FILE",
+    required=True,
     help="Output csv file")
 parser.add_argument("-d", "--debug",
     help="Enable debugging messages", action="store_true")
@@ -189,12 +190,6 @@ for marc_file in marc_files:
         data['lang_code']     = langcode(record)         #041
         data['loc_call_num']  = get_field(record, '050') #050
         data['lcl_call_num']  = lcl_call_number(record)  #099
-
-        for entry in record.get_fields('955'):
-            logging.debug(dir(entry))
-            for key, value in entry.subfields_as_dict().items():
-                logging.debug(f"{key} {value}")
-                logging.debug(f"{constants.SUBFIELDS_955[key]}: {value[0]}")
 
         ldr = leader.Leader(record.leader)
         logging.debug(ldr)
@@ -259,4 +254,11 @@ for marc_file in marc_files:
         for key, val in bib_info.items():
             if val and not re.search(r'^\|+$', val):
                 print(f"\t{key}: '{val}'")
+
+        print(f"[955] Locally Defined Field:")
+        for entry in record.get_fields('955'):
+            logging.debug(dir(entry))
+            for key, value in entry.subfields_as_dict().items():
+                logging.debug(f"{key} {value}")
+                print(f"\t{constants.SUBFIELDS_955[key]}: {value[0]}")
 
